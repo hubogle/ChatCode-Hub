@@ -12,14 +12,28 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chatcode-hub",
+          "title": "Chat Code",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "chatcode-hub": [
+        {
+          "id": "chatcode-hub",
+          "type": "webview",
+          "name": "Chat Code"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "chatcode-hub.openChat",
-        "title": "chat code"
-      },
-      {
         "command": "chatcode-hub.createServer",
-        "title": "create server"
+        "title": "ChatCode create server"
       }
     ]
   },
