@@ -111,7 +111,7 @@ function getIndexContent() {
                 body {
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
                     padding: 10px;
-                    background-color: var(--vscode-editor-background);
+                    background-color: var(--vscode-sideBar-background);
                 }
                 form {
                     display: flex;
@@ -131,6 +131,7 @@ function getIndexContent() {
                     box-sizing: border-box;
                     border: 1px solid var(--vscode-input-border); /* 输入框边框颜色 */
                     background-color: var(--vscode-input-background); /* 输入框背景颜色 */
+                    background-foreground: var(--vscode-input-foreground); /* 输入框输入框前景 */
                     color: var(--vscode-input-foreground); /* 输入框文字颜色 */
                 }
                 input[type="submit"] {
@@ -198,14 +199,14 @@ function getWebviewContent(chatMessages: ChatMessage[]) {
                         padding: 0; /* 移除左右的 padding */
                         display: flex;
                         flex-direction: column;
-                        font-family: Arial, sans-serif;
-                        background-color: var(--vscode-editor-background);
+                        font-family: var(--vscode-font-family);
+                        background-color: var(--vscode-sideBar-background);
                     }
                     #chat {
                         flex-grow: 1;
                         overflow-y: auto;
                         padding: 5px 5px; /* 调整左右 padding 为更小的值 */
-                        background-color: var(--vscode-editor-background);
+                        background-color: var(--vscode-sideBar-background);
                     }
                     .message {
                         padding: 5px;
@@ -215,29 +216,29 @@ function getWebviewContent(chatMessages: ChatMessage[]) {
                     }
                     .message .username {
                         font-weight: bold;
-                        color: #333;
                         font-size: calc(var(--vscode-editor-font-size) * 0.8);
+                        color: var(--vscode-textLink-foreground);
                     }
                     .message .text {
-                        margin-top: 2px;
-                        color: var(--vscode-editor-foreground);
-                        font-family: var(--vscode-editor-font-family),
+                        margin-top: 5px;
                         font-size: var(--vscode-editor-font-size);
+                        color: var(--vscode-foreground);
                     }
+
                     #inputArea {
                         display: flex;
                         align-items: center;
-                        margin: 0; /* 如果需要，调整间距 */
-                        padding: 5px;
-                        background-color: var(--vscode-editor-background);
+                        margin: 0 10px 15px 10px; /* 如果需要，调整间距 */
+                        padding: 0;
+                        background-color: var(--vscode-input-background);
                         border-radius: 4px; /* 圆角边框 */
                     }
 
                     #messageInput {
                         flex-grow: 1;
                         margin-right: 5px; /* 与发送按钮的间隔 */
-                        padding: 10px 15px;
-                        border: 1px solid var(--vscode-input-border); /* 输入框边框颜色 */
+                        padding: 0 15px;
+                        border: none;
                         border-radius: 4px;
                         outline: none; /* 移除焦点时的轮廓 */
                         background-color: var(--vscode-input-background); /* 输入框背景颜色 */
@@ -245,17 +246,26 @@ function getWebviewContent(chatMessages: ChatMessage[]) {
                     }
 
                     #sendButton {
-                        padding: 10px 15px;
-                        background-color: var(--vscode-button-background); /* 按钮颜色 */
-                        color: var(--vscode-button-foreground); /* 按钮文字颜色 */
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 0;
+                        width: 40px; /* 确保按钮足够大以容纳图标 */
+                        height: 40px;
+                        background-color: var(--vscode-input-background);
                         border: none;
-                        border-radius: 4px;
+                        border-radius: 50%; /* 圆形按钮 */
                         cursor: pointer;
-                        outline: none; /* 移除焦点时的轮廓 */
-                                            }
+                        outline: none;
+                    }
 
-                    #sendButton:hover {
-                        background-color: var(--vscode-button-hoverBackground); /* 按钮悬停颜色 */
+                    #sendButton svg {
+                        fill: var(--vscode-button-foreground); /* 默认图标颜色 */
+                        transition: fill 0.2s; /* 平滑颜色过渡效果 */
+                    }
+
+                    #sendButton:hover svg {
+                        fill: var(--vscode-button-hoverForeground); /* 悬停时图标颜色 */
                     }
                 </style>
             </head>
@@ -265,29 +275,53 @@ function getWebviewContent(chatMessages: ChatMessage[]) {
                 </div>
                 <div id="inputArea">
                     <input type="text" id="messageInput" placeholder="Enter message"/>
-                    <button id="sendButton">Send</button>
+                    <button id="sendButton">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+                        </svg>
+                    </button>
                 </div>
 
                 <script>
                     const vscode = acquireVsCodeApi();
+                    const sendButton = document.getElementById('sendButton');
+                    const sendIcon = sendButton.querySelector('svg');
 
 					document.getElementById('messageInput').addEventListener('keypress', (event) => {
 						if (event.key === 'Enter') {
 							const message = document.getElementById('messageInput').value;
+                            if (message === '') {
+                               return;
+                            }
 							vscode.postMessage({
 								command: 'send',
 								text: message
 							});
 							document.getElementById('messageInput').value = ''; // 清空输入框
+                            sendIcon.style.fill = 'var(--vscode-button-foreground)';
 						}
 					});
                     document.getElementById('sendButton').addEventListener('click', () => {
                         const message = document.getElementById('messageInput').value;
+                        if (message === '') {
+                            return;
+                        }
                         vscode.postMessage({
                             command: 'send',
                             text: message
                         });
                         document.getElementById('messageInput').value = ''; // 清空输入框
+                        sendIcon.style.fill = 'var(--vscode-button-foreground)';
+                    });
+
+                    document.getElementById('messageInput').addEventListener('input', () => {
+                        if (messageInput.value.trim() !== '') {
+                            // 输入内容非空时，改变图标颜色
+                            sendIcon.style.fill = 'var(--vscode-textLink-foreground)';
+                        } else {
+                            // 输入内容为空时，恢复默认颜色
+                            sendIcon.style.fill = 'var(--vscode-button-foreground)';
+                        }
                     });
 
                     window.addEventListener('message', event => {
