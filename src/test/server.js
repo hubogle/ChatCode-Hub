@@ -7,13 +7,13 @@ wss.on('connection', ws => {
 
     ws.on('message', message => {
         try {
-            const parsedMessage = JSON.parse(message);
-            console.log(`Received message from ${parsedMessage.username}: ${parsedMessage.text}`);
+            // const parsedMessage = JSON.parse(message);
+            // console.log(`Received message from ${parsedMessage.username}: ${parsedMessage.text}`);
 
             // 广播消息给所有客户端
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify(parsedMessage));
+                    client.send(message);
                 }
             });
         } catch (error) {

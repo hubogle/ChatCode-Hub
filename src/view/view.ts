@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ExtensionContext, WebviewView, WebviewViewProvider } from 'vscode';
 import WebSocket from 'ws';
+import { decryptMessage, encryptMessage } from '../utils/encrypt';
 
 interface ChatMessage {
     username: string;
@@ -15,6 +16,10 @@ export class TodoListWebView implements WebviewViewProvider {
 
     public static viewId: string = 'chatcode-hub';
     resolveWebviewView(webviewView: WebviewView) {
+        vscode.commands.registerCommand('extension.focusMessageInput', () => {
+            webviewView.webview.postMessage({ command: 'chatCodeMessageInput' });
+        });
+
         webviewView.webview.options = {
             enableScripts: true,
         }
@@ -40,6 +45,7 @@ export class TodoListWebView implements WebviewViewProvider {
                 case 'submit':
                     address = message.address;
                     username = message.username;
+                    const password = message.password;
                     const ws = new WebSocket(`ws://${address}`);
 
                     ws.on('error', function (error) {
@@ -53,14 +59,20 @@ export class TodoListWebView implements WebviewViewProvider {
                     ws.on('open', function open() {
                         const message = {
                             username: username,
-                            text: `${username} joined the group`
+                            text: `${username} joined the group`,
+                            type: 'join'
                         };
-                        ws.send(JSON.stringify(message));
+                        const encryptedMessage = encryptMessage(JSON.stringify(message), password);
+                        ws.send(encryptedMessage);
                     });
 
                     ws.on('message', async function incoming(message) {
                         try {
-                            const parsedMessage = JSON.parse(message.toString());
+                            const decryptedMessage = decryptMessage(message.toString(), password);
+                            const parsedMessage = JSON.parse(decryptedMessage);
+                            if (parsedMessage.type === 'join') {
+                                vscode.window.showInformationMessage('Successfully joined the group!');
+                            }
                             chatMessages.push({
                                 username: parsedMessage.username,
                                 text: parsedMessage.text
@@ -82,7 +94,8 @@ export class TodoListWebView implements WebviewViewProvider {
                                     username: username,
                                     text: message.text,
                                 };
-                                ws.send(JSON.stringify(msg));
+                                const encryptedMessage = encryptMessage(JSON.stringify(msg), password);
+                                ws.send(encryptedMessage);
                                 return;
                         }
                     });
@@ -154,8 +167,10 @@ function getIndexContent() {
             <form id="serverForm">
                 <label for="serverAddress">server address:</label>
                 <input type="text" id="serverAddress" name="serverAddress" value="127.0.0.1:8080"><br>
+                <label for="password">address link password:</label>
+                <input type="text" id="password" name="password">
                 <label for="username">user name:</label>
-                <input type="text" id="username" name="username" value="${username}">
+                <input type="text" id="username" name="username" value="${username}"><br>
                 <input type="submit" value="Connect">
             </form>
             <script>
@@ -164,10 +179,12 @@ function getIndexContent() {
                     event.preventDefault();
                     const address = document.getElementById('serverAddress').value;
                     const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
                     vscode.postMessage({
                         command: 'submit',
                         address: address,
-                        username: username
+                        username: username,
+                        password: password
                     });
                 });
             </script>
@@ -326,8 +343,14 @@ function getWebviewContent(chatMessages: ChatMessage[]) {
 
                     window.addEventListener('message', event => {
                         const message = event.data; // 接收的消息
-                        if (message.command === 'receive') {
-                            addReceivedMessageToChat(message.username, message.text);
+                        switch (message.command) {
+                            case 'chatCodeMessageInput':
+                                console.log('chatCodeMessageInput command received');
+                                const messageInput = document.getElementById('messageInput');
+                                messageInput.focus();
+                                break;
+                            case 'receive':
+                                addReceivedMessageToChat(message.username, message.text);
                         }
                     });
 

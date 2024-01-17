@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:extension.chatCodeMessageInput"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -34,6 +36,14 @@
       {
         "command": "chatcode-hub.createServer",
         "title": "ChatCode create server"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "extension.chatCodeMessageInput",
+        "key": "ctrl+alt+o",
+        "mac": "ctrl+cmd+o",
+        "when": "extension.chatCodeMessageInput"
       }
     ]
   },
