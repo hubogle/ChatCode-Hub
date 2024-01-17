@@ -13,13 +13,14 @@
     "onCommand:extension.chatCodeMessageInput"
   ],
   "main": "./dist/extension.js",
+  "icon": "resources/icon.png",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
           "id": "chatcode-hub",
           "title": "Chat Code",
-          "icon": "resources/icon.svg"
+          "icon": "resources/sideBar-icon.svg"
         }
       ]
     },
