@@ -6,6 +6,7 @@ import { decryptMessage, encryptMessage } from '../utils/encrypt';
 interface ChatMessage {
     username: string;
     text: string;
+    type: string;
 }
 
 export class TodoListWebView implements WebviewViewProvider {
@@ -29,9 +30,10 @@ export class TodoListWebView implements WebviewViewProvider {
         let chatMessages: ChatMessage[] = []; // 消息列表
         let address: string = '';
         let username: string = '';
+        let password: string = '';
         webviewView.onDidChangeVisibility(() => {
             if (webviewView.visible) {
-                if (address === '' || username === '') {
+                if (address === '' || username === '' || password === '') {
                     webviewView.webview.html = getIndexContent();
                     return;
                 } else {
@@ -40,65 +42,96 @@ export class TodoListWebView implements WebviewViewProvider {
                 }
             }
         });
+
         webviewView.webview.onDidReceiveMessage(message => {
             switch (message.command) {
                 case 'submit':
                     address = message.address;
                     username = message.username;
-                    const password = message.password;
+                    password = message.password;
+                    if (address === '' || username === '' || password === '') {
+                        vscode.window.showErrorMessage("Please configure the server address, username and password first!");
+                        return;
+                    }
                     const ws = new WebSocket(`ws://${address}`);
 
                     ws.on('error', function (error) {
                         // console.error(`WebSocket error: ${error}`);
-                        vscode.window.showInformationMessage(`${error}`);
+                        vscode.window.showErrorMessage(`${error}`);
                         webviewView.webview.html = getIndexContent();
                     });
 
-                    webviewView.webview.html = getWebviewContent(chatMessages);
+                    // webviewView.webview.html = getWebviewContent(chatMessages);
 
                     ws.on('open', function open() {
                         const message = {
-                            username: username,
-                            text: `${username} joined the group`,
-                            type: 'join'
+                            uid: username,
+                            msg: password,
+                            type: 'login'
                         };
-                        const encryptedMessage = encryptMessage(JSON.stringify(message), password);
-                        ws.send(encryptedMessage);
+                        // const encryptedMessage = encryptMessage(JSON.stringify(message), password);
+                        ws.send(JSON.stringify(message));
                     });
+
 
                     ws.on('message', async function incoming(message) {
                         try {
-                            const decryptedMessage = decryptMessage(message.toString(), password);
-                            const parsedMessage = JSON.parse(decryptedMessage);
-                            if (parsedMessage.type === 'join') {
-                                vscode.window.showInformationMessage('Successfully joined the group!');
+                            // const decryptedMessage = decryptMessage(message.toString(), password);
+                            const parsedMessage = JSON.parse(message.toString());
+                            switch (parsedMessage.type) {
+                                case 'join':
+                                    vscode.window.showInformationMessage('Successfully joined the group!');
+                                    webviewView.webview.html = getWebviewContent(chatMessages);
+                                    break;
+                                case 'error':
+                                    vscode.window.showErrorMessage(`${parsedMessage.msg}`);
+                                    break;
+                                default:
                             }
-                            chatMessages.push({
-                                username: parsedMessage.username,
-                                text: parsedMessage.text
-                            });
-                            webviewView.webview.postMessage({
-                                command: 'receive',
-                                username: parsedMessage.username,
-                                text: parsedMessage.text
-                            });
+
+                            if (parsedMessage.type == 'msg' || parsedMessage.type == 'join') {
+                                let text = parsedMessage.msg;
+                                if (parsedMessage.type == 'msg') {
+                                    text = JSON.parse(decryptMessage(parsedMessage.msg, password));
+                                } else {
+                                    text = `${parsedMessage.uid} has joined the chat`;
+                                }
+                                chatMessages.push({
+                                    username: parsedMessage.uid,
+                                    text: text,
+                                    type: parsedMessage.type
+                                });
+                                webviewView.webview.postMessage({
+                                    command: 'receive',
+                                    username: parsedMessage.uid,
+                                    text: text,
+                                    type: parsedMessage.type
+                                });
+                            }
                         } catch (error) {
-                            // console.error('Error parsing message:', error);
-                            vscode.window.showInformationMessage(`${error}`);
+                            vscode.window.showErrorMessage(`${error}`);
                         }
                     });
                     webviewView.webview.onDidReceiveMessage(message => {
                         switch (message.command) {
                             case 'send':
-                                const msg = {
-                                    username: username,
-                                    text: message.text,
-                                };
-                                const encryptedMessage = encryptMessage(JSON.stringify(msg), password);
-                                ws.send(encryptedMessage);
-                                return;
+                                try {
+                                    const msg = {
+                                        uid: username,
+                                        type: 'msg',
+                                        msg: encryptMessage(JSON.stringify(message.text), password),
+                                    };
+                                    // const encryptedMessage = encryptMessage(JSON.stringify(msg), password);
+                                    ws.send(JSON.stringify(msg));
+                                    return;
+                                } catch (error) {
+                                    // console.error('Error parsing message:', error);
+                                    vscode.window.showErrorMessage('send message error');
+                                }
+
                         }
                     });
+                    break;
                 default:
                     break;
             }
@@ -345,7 +378,6 @@ function getWebviewContent(chatMessages: ChatMessage[]) {
                         const message = event.data; // 接收的消息
                         switch (message.command) {
                             case 'chatCodeMessageInput':
-                                console.log('chatCodeMessageInput command received');
                                 const messageInput = document.getElementById('messageInput');
                                 messageInput.focus();
                                 break;
