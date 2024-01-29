@@ -37,6 +37,20 @@
       {
         "command": "chatcode-hub.createServer",
         "title": "ChatCode create server"
+      },
+      {
+        "command": "chatcode-hub.login",
+        "title": "Sign In",
+        "category": "chatcode-hub",
+        "icon": {
+          "light": "resources/light/login.svg",
+          "dark": "resources/dark/login.svg"
+        }
+      },
+      {
+        "command": "chatcode-hub.signout",
+        "title": "Sign Out",
+        "category": "chatcode-hub"
       }
     ],
     "keybindings": [
@@ -46,7 +60,16 @@
         "mac": "ctrl+cmd+o",
         "when": "extension.chatCodeMessageInput"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "chatcode-hub.login",
+          "group": "navigation",
+          "when": "view == chatcode-hub"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Server } from 'ws';
 import CreateServer from './server/server';
 import { TodoListWebView } from './view/view';
+import { manager } from "./manage";
 
 
 let wss: Server | null = null;
@@ -26,7 +27,8 @@ export function activate(context: vscode.ExtensionContext) {
 	const todolistWebview = new TodoListWebView(context);
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(TodoListWebView.viewId, todolistWebview)
+		vscode.window.registerWebviewViewProvider(TodoListWebView.viewId, todolistWebview),
+		vscode.commands.registerCommand("chatcode-hub.login", () => manager.login()),
 	)
 	context.subscriptions.push(disposable);
 }
