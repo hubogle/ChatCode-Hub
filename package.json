@@ -27,30 +27,50 @@
     "views": {
       "chatcode-hub": [
         {
-          "id": "chatcode-hub",
+          "id": "personList",
+          "name": "Persion List"
+        },
+        {
+          "id": "messageList",
           "type": "webview",
-          "name": "Chat Code"
+          "name": "Messages"
         }
       ]
     },
     "commands": [
       {
-        "command": "chatcode-hub.createServer",
-        "title": "ChatCode create server"
-      },
-      {
         "command": "chatcode-hub.login",
-        "title": "Sign In",
+        "title": "Login In",
         "category": "chatcode-hub",
-        "icon": {
-          "light": "resources/light/login.svg",
-          "dark": "resources/dark/login.svg"
-        }
+        "icon": "$(log-in)"
       },
       {
         "command": "chatcode-hub.signout",
         "title": "Sign Out",
-        "category": "chatcode-hub"
+        "category": "chatcode-hub",
+        "icon": "$(log-out)"
+      },
+      {
+        "command": "chatcode-hub.addPerson",
+        "title": "Add Person",
+        "category": "chatcode-hub",
+        "icon": "$(person)"
+      },
+      {
+        "command": "chatcode-hub.addGroup",
+        "title": "Add Group",
+        "category": "chatcode-hub",
+        "icon": "$(organization)"
+      },
+      {
+        "command": "chatcode-hub.refresh",
+        "title": "Refresh",
+        "category": "chatcode-hub",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "chatcode-hub.selectPerson",
+        "title": "Select Person"
       }
     ],
     "keybindings": [
@@ -64,9 +84,29 @@
     "menus": {
       "view/title": [
         {
+          "command": "chatcode-hub.refresh",
+          "group": "navigation",
+          "when": "view == personList"
+        },
+        {
           "command": "chatcode-hub.login",
           "group": "navigation",
-          "when": "view == chatcode-hub"
+          "when": "view == personList"
+        },
+        {
+          "command": "chatcode-hub.signout",
+          "group": "navigation",
+          "when": "view == personList"
+        },
+        {
+          "command": "chatcode-hub.addPerson",
+          "group": "navigation",
+          "when": "view == personList"
+        },
+        {
+          "command": "chatcode-hub.addGroup",
+          "group": "navigation",
+          "when": "view == personList"
         }
       ]
     }

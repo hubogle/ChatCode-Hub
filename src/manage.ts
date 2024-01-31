@@ -13,6 +13,7 @@ class Manager extends EventEmitter {
         this.account = undefined;
     }
 
+
     public async login(): Promise<void> {
         try {
             const host = await vscode.window.showInputBox({
