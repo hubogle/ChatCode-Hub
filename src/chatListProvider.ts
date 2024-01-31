@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { GetChatList, GetRoomPerson } from "./server/chat";
 
 export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<ChatItem | undefined | void> = new vscode.EventEmitter<ChatItem | undefined | void>();
@@ -9,21 +10,27 @@ export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
     }
 
     getChildren(element?: ChatItem): Thenable<ChatItem[]> {
+
         if (element) {
             if (element.isGroup) {
-                return Promise.resolve([
-                    new ChatItem("Member 1", "member1-id", true, false),
-                    new ChatItem("Member 2", "member2-id", false, false),
-                ]);
+                try {
+                    const chatItems = GetRoomPerson("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjMsImFjY291bnQiOiJ1c2VyMiJ9.Vgz3-tUQYVVwe_QvvT8sdW9zSalVfcLBpygeHKqrhnc", element.id);
+                    return chatItems;
+                } catch (error) {
+                    console.error(error);
+                    return Promise.resolve([]);
+                }
             } else {
                 return Promise.resolve([]);
             }
         } else {
-            return Promise.resolve([
-                new ChatItem("Bob", "bob-id", false, false),
-                new ChatItem("Alice", "alice-id", true, false),
-                new ChatItem("Group Chat", "group1-id", false, true),
-            ]);
+            try {
+                const chatItems = GetChatList("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjMsImFjY291bnQiOiJ1c2VyMiJ9.Vgz3-tUQYVVwe_QvvT8sdW9zSalVfcLBpygeHKqrhnc");
+                return chatItems;
+            } catch (error) {
+                console.error(error);
+                return Promise.resolve([]);
+            }
         }
     }
 
@@ -37,11 +44,11 @@ export class ChatItem extends vscode.TreeItem {
     constructor(
         public readonly label: string,
         public readonly id: string,
-        public readonly online: boolean,
         public readonly isGroup: boolean,
     ) {
         super(label);
         let iconColor = undefined
+        let online = true;
 
         if (online) {
             iconColor = new vscode.ThemeColor('terminal.ansiGreen');
