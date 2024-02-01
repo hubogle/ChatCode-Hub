@@ -10,7 +10,7 @@ export async function UserLogin(address: string | undefined, account: string | u
             account,
             password,
         }, "");
-        return String(data.token);
+        return data;
 
     } catch (error) {
         throw error;

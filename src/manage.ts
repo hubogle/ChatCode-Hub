@@ -8,6 +8,7 @@ export class Manager extends EventEmitter {
     private account: string | undefined;
     private token: string | undefined;
     private address: string | undefined;
+    private uid: number | undefined;
 
     constructor(private readonly context: vscode.ExtensionContext) {
         super();
@@ -15,10 +16,11 @@ export class Manager extends EventEmitter {
     }
 
     private saveUserInfo() {
-        storeGlobals(this.address, this.token, this.account);
+        storeGlobals(this.address, this.token, this.account, this.uid);
         this.context.globalState.update('account', this.account);
         this.context.globalState.update('token', this.token);
         this.context.globalState.update('address', this.address);
+        this.context.globalState.update('uid', this.uid);
     }
 
 
@@ -26,7 +28,8 @@ export class Manager extends EventEmitter {
         this.account = this.context.globalState.get('account');
         this.token = this.context.globalState.get('token');
         this.address = this.context.globalState.get('address');
-        storeGlobals(this.address, this.token, this.account);
+        this.uid = this.context.globalState.get('uid');
+        storeGlobals(this.address, this.token, this.account, this.uid);
         if (this.token) {
             storeStatus(true)
             vscode.commands.executeCommand('chatcode-hub.ws');
@@ -37,7 +40,8 @@ export class Manager extends EventEmitter {
         this.context.globalState.update('account', undefined);
         this.context.globalState.update('token', undefined);
         this.context.globalState.update('address', undefined);
-        storeGlobals(undefined, undefined, undefined);
+        this.context.globalState.update('uid', undefined);
+        storeGlobals(undefined, undefined, undefined, undefined);
         storeStatus(false)
     }
 
@@ -70,10 +74,11 @@ export class Manager extends EventEmitter {
             });
 
             try {
-                const token = await UserLogin(address, username, password)
+                const data = await UserLogin(address, username, password)
                 vscode.window.showInformationMessage(`Successfully login as ${username}`);
                 this.account = username;
-                this.token = token;
+                this.token = data.token;
+                this.uid = data.uid;
                 this.address = address;
                 storeStatus(true)
                 vscode.commands.executeCommand('chatcode-hub.refresh');

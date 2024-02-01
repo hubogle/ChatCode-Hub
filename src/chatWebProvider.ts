@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ChatItem } from './chatListProvider';
+import { uid } from "./globals";
 import { WsClient } from './ws';
 
 export class MessageViewProvider implements vscode.WebviewViewProvider {
@@ -23,7 +24,12 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
             this._view.webview.html = this.getWebviewContent(person);
             this._view.webview.onDidReceiveMessage(message => {
                 if (message.command === 'sendMessage') {
-                    this.wsClient.sendMessage(message.text, message.id, message.isGroup);
+                    this.wsClient.sendMessage(
+                        String(message.content),
+                        message.receiver_id,
+                        uid,
+                        message.isGroup
+                    );
                 }
             })
             this._view.show?.(true); // Bring the webview into view
@@ -96,8 +102,8 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
                 }
                 vscode.postMessage({
                     command: 'sendMessage',
-                    text: message,
-                    id: ${person.id},
+                    content: message,
+                    receiver_id: ${person.id},
                     isGroup: ${person.isGroup}
                 });
                 document.getElementById('messageInput').value = ''; // 清空输入框
