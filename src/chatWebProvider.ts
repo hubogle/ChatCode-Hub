@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ChatItem } from './chatListProvider';
-import { uid } from "./globals";
+import { token, uid } from "./globals";
+import { ChatMessageItem, GetChatMessage } from "./server/chat";
 import { WsClient } from './ws';
 
 export class MessageViewProvider implements vscode.WebviewViewProvider {
@@ -19,9 +20,11 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = this.getInitialWebviewContent();
     }
 
-    public showMessagesForPerson(person: ChatItem) {
+    public async showMessagesForPerson(person: ChatItem) {
         if (this._view) {
-            this._view.webview.html = this.getWebviewContent(person);
+            const chatMessageList = await GetChatMessage(token, person.id, person.isGroup ? 2 : 1)
+            this._view.webview.html = this.getWebviewContent(person, chatMessageList);
+
             this._view.webview.onDidReceiveMessage(message => {
                 if (message.command === 'sendMessage') {
                     this.wsClient.sendMessage(
@@ -40,15 +43,20 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
         return `<html><body>Select a person to view messages.</body></html>`;
     }
 
-    private getWebviewContent(person: ChatItem): string {
-        // Generate and return HTML content based on the person selected
-        // Example content:
+    private getWebviewContent(person: ChatItem, chatMessageList: ChatMessageItem[]): string {
         let messages = '';
-        if (person.label === 'Alice') {
-            messages = `<p>Hi, this is Alice!</p><p>How are you doing?</p>`;
-        } else if (person.label === 'Bob') {
-            messages = `<p>Hey, Bob here!</p><p>Let's catch up sometime</p>`;
-        }
+        chatMessageList.forEach(msg => {
+            const messageClass = msg.type === 1 ? "received" : "sent";
+            messages += `
+            <div class="${messageClass}">
+                <div class="message-header">
+                    <span class="nickname">${msg.nickname}</span>
+                    <span class="timestamp">${new Date(msg.send_at).toLocaleString()}</span>
+                </div>
+                <div class="message-content">${msg.content}</div>
+            </div>
+        `;
+        });
 
         return `
 <!DOCTYPE html>
@@ -86,9 +94,45 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
             border-color: var(--vscode-focusBorder); /* Border color when focused */
             outline: none;
         }
+        #messages {
+            padding: 10px;
+            overflow-y: auto;
+        }
+        .sent, .received {
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            color: var(--vscode-editor-foreground);
+            background-color: var(--vscode-editor-background); /* Adapt to theme background */
+        }
+        .sent {
+            /* Additional styles for sent messages if needed */
+        }
+        .received {
+            /* Additional styles for received messages if needed */
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .nickname {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.8em;
+        }
+        .message-content {
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
+    <div id="messages">
+        ${messages}
+    </div>
     <div id="inputArea">
         <input type="text" id="messageInput" placeholder="Type a message...">
     </div>
@@ -115,4 +159,5 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
 </html>
 `;
     }
+
 }

@@ -6,5 +6,6 @@ export enum UserStatus {
 export enum URL {
     Login = "/api/v1/login",
     ChatList = "/api/v1/chat/list",
+    ChatMessageList = "/api/v1/chat/message/list",
     RoomPerson = '/api/v1/room/${roomId}/person',
 }

@@ -13,6 +13,17 @@ interface ChatResp {
     list: ChatItemInfo[],
 }
 
+interface ChatMessageResp {
+    list: ChatMessageItem[],
+}
+export interface ChatMessageItem {
+    content: string,
+    nickname: string,
+    send_at: number,
+    type: number,
+    uid: number,
+}
+
 export async function GetChatList(token: string | undefined) {
     try {
         let url = `http://${address}${URL.ChatList}`;
@@ -45,4 +56,24 @@ export async function GetRoomPerson(token: string | undefined, roomId: string) {
     } catch (error) {
         throw error;
     }
+}
+
+export async function GetChatMessage(token: string | undefined, uid: string, type: number) {
+    try {
+        let url = `http://${address}${URL.ChatMessageList}?uid=${uid}&type=${type}`; // 通过 uid 和 type 获取聊天记录
+        const data = await Get(url, token) as ChatMessageResp;
+        const chatMessages: ChatMessageItem[] = data.list.map(item => {
+            return {
+                content: item.content,
+                nickname: "admin",
+                send_at: item.send_at,
+                type: item.type,
+                uid: item.uid,
+            };
+        });
+        return chatMessages;
+    } catch (error) {
+        throw error;
+    }
+
 }
