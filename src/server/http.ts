@@ -10,14 +10,14 @@ export async function Post(url: string, body: any, token: string | undefined) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': token ? `${token}` : ''
+                'Authorization': token ? `Bearer ${token}` : ''
             },
             body: JSON.stringify(body)
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // if (!response.ok) {
+        //     throw new Error(`HTTP error! status: ${response.status}`);
+        // }
 
         const data = await response.json() as ResponseData;
         if (data.code === 200) {
@@ -37,13 +37,13 @@ export async function Get(url: string, token: string | undefined) {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'Authorization': token ? `${token}` : ''
+                'Authorization': token ? `Bearer ${token}` : ''
             }
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // if (!response.ok) {
+        //     throw new Error(`HTTP error! status: ${response.status}`);
+        // }
 
         const data = await response.json() as ResponseData;
         if (data.code === 200) {

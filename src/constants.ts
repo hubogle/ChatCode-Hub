@@ -4,7 +4,7 @@ export enum UserStatus {
 }
 
 export enum URL {
-    Login = "/api/v1/user/login",
-    ChatList = "http://127.0.0.1:8080/api/v1/chat/list",
-    RoomPerson = 'http://127.0.0.1:8080/api/v1/room/${roomId}/person',
+    Login = "/api/v1/login",
+    ChatList = "/api/v1/chat/list",
+    RoomPerson = '/api/v1/room/${roomId}/person',
 }

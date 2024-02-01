@@ -1,5 +1,6 @@
 import { ChatItem } from "../chatListProvider";
 import { URL } from "../constants";
+import { address } from "../globals";
 import { Get } from "./http";
 
 interface ChatItemInfo {
@@ -12,9 +13,10 @@ interface ChatResp {
     list: ChatItemInfo[],
 }
 
-export async function GetChatList(token: string) {
+export async function GetChatList(token: string | undefined) {
     try {
-        const data = await Get(URL.ChatList, token) as ChatResp;
+        let url = `http://${address}${URL.ChatList}`;
+        const data = await Get(url, token) as ChatResp;
         const chatItems: ChatItem[] = data.list.map(item => {
             return new ChatItem(
                 item.name,
@@ -24,14 +26,13 @@ export async function GetChatList(token: string) {
         });
         return chatItems;
     } catch (error) {
-        console.error(error);
         throw error;
     }
 }
 
-export async function GetRoomPerson(token: string, roomId: string) {
+export async function GetRoomPerson(token: string | undefined, roomId: string) {
     try {
-        const url = URL.RoomPerson.replace("${roomId}", roomId);
+        let url = `http://${address}${URL.RoomPerson.replace("${roomId}", roomId)}`;
         const data = await Get(url, token) as ChatResp;
         const chatItems: ChatItem[] = data.list.map(item => {
             return new ChatItem(
@@ -42,7 +43,6 @@ export async function GetRoomPerson(token: string, roomId: string) {
         });
         return chatItems;
     } catch (error) {
-        console.error(error);
         throw error;
     }
 }

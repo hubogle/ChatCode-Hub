@@ -45,7 +45,7 @@
         "icon": "$(log-in)"
       },
       {
-        "command": "chatcode-hub.signout",
+        "command": "chatcode-hub.logout",
         "title": "Sign Out",
         "category": "chatcode-hub",
         "icon": "$(log-out)"
@@ -94,7 +94,7 @@
           "when": "view == personList"
         },
         {
-          "command": "chatcode-hub.signout",
+          "command": "chatcode-hub.logout",
           "group": "navigation",
           "when": "view == personList"
         },

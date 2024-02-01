@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { ChatItem } from './chatListProvider';
+import { WsClient } from './ws';
 
 export class MessageViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
 
-    constructor(private readonly extensionUri: vscode.Uri) {
-    }
+    constructor(private readonly extensionUri: vscode.Uri, private readonly wsClient: WsClient) { }
+
 
     public resolveWebviewView(webviewView: vscode.WebviewView) {
         this._view = webviewView;
@@ -20,6 +21,11 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
     public showMessagesForPerson(person: ChatItem) {
         if (this._view) {
             this._view.webview.html = this.getWebviewContent(person);
+            this._view.webview.onDidReceiveMessage(message => {
+                if (message.command === 'sendMessage') {
+                    this.wsClient.sendMessage(message.text, message.id, message.isGroup);
+                }
+            })
             this._view.show?.(true); // Bring the webview into view
         }
     }
@@ -80,6 +86,25 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
     <div id="inputArea">
         <input type="text" id="messageInput" placeholder="Type a message...">
     </div>
+    <script>
+        const vscode = acquireVsCodeApi();
+        document.getElementById('messageInput').addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                const message = document.getElementById('messageInput').value;
+                if (message === '') {
+                    return;
+                }
+                vscode.postMessage({
+                    command: 'sendMessage',
+                    text: message,
+                    id: ${person.id},
+                    isGroup: ${person.isGroup}
+                });
+                document.getElementById('messageInput').value = ''; // 清空输入框
+                sendIcon.style.fill = 'var(--vscode-button-foreground)';
+            }
+        });
+    </script>
 </body>
 </html>
 `;

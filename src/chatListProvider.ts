@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { status, token } from "./globals";
 import { GetChatList, GetRoomPerson } from "./server/chat";
 
 export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
@@ -11,10 +12,14 @@ export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
 
     getChildren(element?: ChatItem): Thenable<ChatItem[]> {
 
+        if (!status) {
+            return Promise.resolve([new LoginPromptItem()] as ChatItem[]);
+        }
+
         if (element) {
             if (element.isGroup) {
                 try {
-                    const chatItems = GetRoomPerson("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjMsImFjY291bnQiOiJ1c2VyMiJ9.Vgz3-tUQYVVwe_QvvT8sdW9zSalVfcLBpygeHKqrhnc", element.id);
+                    const chatItems = GetRoomPerson(token, element.id);
                     return chatItems;
                 } catch (error) {
                     console.error(error);
@@ -25,15 +30,15 @@ export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
             }
         } else {
             try {
-                const chatItems = GetChatList("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjMsImFjY291bnQiOiJ1c2VyMiJ9.Vgz3-tUQYVVwe_QvvT8sdW9zSalVfcLBpygeHKqrhnc");
+                const chatItems = GetChatList(token);
                 return chatItems;
             } catch (error) {
                 console.error(error);
+                vscode.window.showErrorMessage('Error fetching chat list')
                 return Promise.resolve([]);
             }
         }
     }
-
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -69,5 +74,16 @@ export class ChatItem extends vscode.TreeItem {
                 arguments: [this]
             };
         }
+    }
+}
+
+export class LoginPromptItem extends vscode.TreeItem {
+    constructor() {
+        super("Please login to view chats", vscode.TreeItemCollapsibleState.None);
+        this.command = {
+            command: 'chatcode-hub.login',
+            title: "Login",
+            arguments: []
+        };
     }
 }
