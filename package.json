@@ -81,6 +81,12 @@
         "icon": "$(copy)"
       },
       {
+        "command": "chatcode-hub.addPerson",
+        "title": "Add Friend",
+        "category": "chatcode-hub",
+        "icon": "$(add)"
+      },
+      {
         "command": "chatcode-hub.selectPerson",
         "title": "Select Person"
       }
@@ -130,6 +136,11 @@
         {
           "command": "chatcode-hub.copyItemID",
           "when": "view == personList",
+          "group": "inline"
+        },
+        {
+          "command": "chatcode-hub.addPerson",
+          "when": "view == personList && viewItem == member",
           "group": "inline"
         }
       ]

@@ -35,6 +35,7 @@ export async function GetChatList(token: string | undefined) {
                 item.name,
                 String(item.uid),
                 item.type === 1 ? false : true,
+                "person"
             );
         });
         return chatItems;
@@ -52,6 +53,7 @@ export async function GetRoomPerson(token: string | undefined, roomId: string) {
                 item.name,
                 `${roomId}-${item.uid}`, // 为了区分群组和个人，这里的 id 用了 `roomId-uid
                 item.type === 1 ? false : true,
+                "member",
             );
         });
         return chatItems;

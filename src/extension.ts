@@ -23,6 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand("chatcode-hub.ws", () => wsClient.connectWebSocket()),
 		vscode.commands.registerCommand("chatcode-hub.createRoom", () => manager.CreateRoom()),
 		vscode.commands.registerCommand("chatcode-hub.copyItemID", (item: ChatItem) => chatListProvider.CopyItemID(item)),
+		vscode.commands.registerCommand("chatcode-hub.addPerson", (item: ChatItem) => chatListProvider.AddPerson(item)),
 	);
 
 }

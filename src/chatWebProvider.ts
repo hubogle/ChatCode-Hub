@@ -14,7 +14,7 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
 
     constructor(private readonly extensionUri: vscode.Uri, private readonly wsClient: WsClient) {
         this.wsClient.onMessageReceived(this.handleReceivedMessage.bind(this));
-        this.person = new ChatItem("", "", false);
+        this.person = new ChatItem("", "", false, "person");
     }
 
     private checkActive() {

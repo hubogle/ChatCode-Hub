@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { status, token } from "./globals";
 import { GetChatList, GetRoomPerson } from "./server/chat";
+import { AddPerson } from "./server/user";
 
 export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<ChatItem | undefined | void> = new vscode.EventEmitter<ChatItem | undefined | void>();
@@ -15,28 +16,24 @@ export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
         if (!status) {
             return Promise.resolve([new LoginPromptItem()] as ChatItem[]);
         }
-
-        if (element) {
-            if (element.isGroup) {
-                try {
-                    const chatItems = GetRoomPerson(token, element.id);
-                    return chatItems;
-                } catch (error) {
-                    console.error(error);
-                    return Promise.resolve([]);
-                }
-            } else {
-                return Promise.resolve([]);
-            }
-        } else {
-            try {
-                const chatItems = GetChatList(token);
+        try {
+            // 示例代码，根据您的逻辑调整
+            if (element && element.isGroup) {
+                // 加载群组成员
+                const chatItems = GetRoomPerson(token, element.id).then(items =>
+                    items.map(item => new ChatItem(item.label, item.id, item.isGroup, item.itemType))
+                );
                 return chatItems;
-            } catch (error) {
-                console.error(error);
-                vscode.window.showErrorMessage('Error fetching chat list')
-                return Promise.resolve([]);
+            } else {
+                const chatItems = GetChatList(token).then(items =>
+                    items.map(item => new ChatItem(item.label, item.id, item.isGroup, item.isGroup ? 'group' : 'person'))
+                );
+                return chatItems;
             }
+        } catch (error) {
+            vscode.window.showErrorMessage('Error fetching chat list')
+            console.error(error);
+            return Promise.resolve([]);
         }
     }
 
@@ -45,12 +42,29 @@ export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
     }
 
     async CopyItemID(item: ChatItem) {
-        await vscode.env.clipboard.writeText(item.id);
-        if (item.isGroup) {
-            vscode.window.showInformationMessage('Room ID: ' + item.id + ' copied to clipboard');
-        } else {
-            vscode.window.showInformationMessage('User ID: ' + item.id + ' copied to clipboard');
+        let uid = item.id;
+        if (item.itemType === 'person') {
+            uid = item.id.split('-')[1];
         }
+        await vscode.env.clipboard.writeText(uid);
+        if (item.isGroup) {
+            vscode.window.showInformationMessage('Room ID: ' + uid + ' copied to clipboard');
+        } else {
+            vscode.window.showInformationMessage('User ID: ' + uid + ' copied to clipboard');
+        }
+    }
+
+    async AddPerson(item: ChatItem) {
+        let uid = item.id;
+        if (item.itemType === 'person') {
+            uid = item.id.split('-')[1];
+        }
+        AddPerson(token, parseInt(uid)).then(() => {
+            vscode.window.showInformationMessage('Successfully added person');
+        }).catch((error) => {
+            vscode.window.showErrorMessage('Error adding person');
+            console.error(error);
+        });
     }
 }
 
@@ -59,6 +73,7 @@ export class ChatItem extends vscode.TreeItem {
         public readonly label: string,
         public readonly id: string,
         public readonly isGroup: boolean,
+        public readonly itemType: 'group' | 'member' | 'person'
     ) {
         super(label);
         let iconColor = undefined
@@ -71,7 +86,7 @@ export class ChatItem extends vscode.TreeItem {
         this.iconPath = new vscode.ThemeIcon(isGroup ? 'organization' : 'person', iconColor);
         this.collapsibleState = isGroup ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
 
-        this.contextValue = isGroup ? 'group' : 'person'; // 新增 contextValue 区分个人和群组
+        this.contextValue = itemType
 
         this.tooltip = `${label} (${online ? "Online" : "Offline"})`;
 
