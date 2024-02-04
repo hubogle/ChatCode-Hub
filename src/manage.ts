@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { storeGlobals, storeStatus } from './globals';
-import { UserLogin } from "./server/user";
+import { CreateRoom, UserLogin } from "./server/user";
 
 import * as vscode from "vscode";
 
@@ -108,5 +108,38 @@ export class Manager extends EventEmitter {
                 return text === "" ? "Please enter the person's uid" : null;
             },
         });
+    }
+
+    public async CreateRoom(): Promise<void> {
+        const roomName = await vscode.window.showInputBox({
+            prompt: "Please enter the room's name",
+            placeHolder: "room name",
+            validateInput: (text) => {
+                return text === "" ? "Please enter the room's name" : null;
+            },
+        });
+        if (!roomName) {
+            vscode.window.showErrorMessage("Please enter the room's name");
+            return;
+        }
+        const roomSalt = await vscode.window.showInputBox({
+            prompt: "Please enter the room's salt(it can be empty)",
+            placeHolder: "room salt",
+        });
+        try {
+            const data = await CreateRoom(this.token, roomName, roomSalt || "");
+            const roomID = data.room_id;
+
+            if (!roomSalt) {
+                vscode.window.showInformationMessage(`Successfully created room ${roomID} without a password.`);
+            } else {
+                vscode.window.showInformationMessage(`Successfully created room ${roomID} with salt ${roomSalt}.`);
+            }
+
+            vscode.commands.executeCommand('chatcode-hub.refresh');
+        } catch (error) {
+            console.error('An error occurred:', error);
+            vscode.window.showErrorMessage(`Failed to create room: ${error}`);
+        }
     }
 }

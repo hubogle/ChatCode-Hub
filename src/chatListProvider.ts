@@ -43,6 +43,15 @@ export class ChatListProvider implements vscode.TreeDataProvider<ChatItem> {
     refresh(): void {
         this._onDidChangeTreeData.fire();
     }
+
+    async CopyItemID(item: ChatItem) {
+        await vscode.env.clipboard.writeText(item.id);
+        if (item.isGroup) {
+            vscode.window.showInformationMessage('Room ID: ' + item.id + ' copied to clipboard');
+        } else {
+            vscode.window.showInformationMessage('User ID: ' + item.id + ' copied to clipboard');
+        }
+    }
 }
 
 export class ChatItem extends vscode.TreeItem {

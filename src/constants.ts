@@ -9,4 +9,5 @@ export enum URL {
     ChatMessageList = "/api/v1/chat/message/list",
     RoomPerson = '/api/v1/room/${roomId}/person',
     AddPerson = '/api/v1/friend/add',
+    CreateRoom = '/api/v1/room/create',
 }

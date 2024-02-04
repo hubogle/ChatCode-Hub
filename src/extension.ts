@@ -14,13 +14,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider('messageList', messageViewProvider),
-		vscode.commands.registerCommand('chatcode-hub.selectPerson', (person: ChatItem) => {
-			messageViewProvider.showMessagesForPerson(person);
+		vscode.commands.registerCommand('chatcode-hub.selectPerson', (item: ChatItem) => {
+			messageViewProvider.showMessagesForPerson(item);
 		}),
 		vscode.commands.registerCommand('chatcode-hub.refresh', () => chatListProvider.refresh()),
 		vscode.commands.registerCommand("chatcode-hub.login", () => manager.login()),
 		vscode.commands.registerCommand("chatcode-hub.logout", () => manager.logout()),
 		vscode.commands.registerCommand("chatcode-hub.ws", () => wsClient.connectWebSocket()),
+		vscode.commands.registerCommand("chatcode-hub.createRoom", () => manager.CreateRoom()),
+		vscode.commands.registerCommand("chatcode-hub.copyItemID", (item: ChatItem) => chatListProvider.CopyItemID(item)),
 	);
 
 }

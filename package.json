@@ -57,8 +57,8 @@
         "icon": "$(person)"
       },
       {
-        "command": "chatcode-hub.addGroup",
-        "title": "Add Group",
+        "command": "chatcode-hub.addRoom",
+        "title": "Add Room",
         "category": "chatcode-hub",
         "icon": "$(organization)"
       },
@@ -67,6 +67,18 @@
         "title": "Refresh",
         "category": "chatcode-hub",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "chatcode-hub.createRoom",
+        "title": "Create Room",
+        "category": "chatcode-hub",
+        "icon": "$(add)"
+      },
+      {
+        "command": "chatcode-hub.copyItemID",
+        "title": "Copy ID",
+        "category": "chatcode-hub",
+        "icon": "$(copy)"
       },
       {
         "command": "chatcode-hub.selectPerson",
@@ -104,9 +116,21 @@
           "when": "view == personList"
         },
         {
-          "command": "chatcode-hub.addGroup",
+          "command": "chatcode-hub.addRoom",
           "group": "navigation",
           "when": "view == personList"
+        },
+        {
+          "command": "chatcode-hub.createRoom",
+          "group": "navigation",
+          "when": "view == personList"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "chatcode-hub.copyItemID",
+          "when": "view == personList",
+          "group": "inline"
         }
       ]
     }

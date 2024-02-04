@@ -27,3 +27,16 @@ export async function AddPerson(token: string | undefined, uid: number) {
         throw error;
     }
 }
+
+export async function CreateRoom(token: string | undefined, name: string, salt: string) {
+    try {
+        let url = `http://${address}${URL.CreateRoom}`;
+        const data = await Post(url, {
+            name,
+            salt,
+        }, token);
+        return data;
+    } catch (error) {
+        throw error;
+    }
+}
