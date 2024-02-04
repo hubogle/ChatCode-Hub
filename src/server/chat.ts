@@ -1,6 +1,6 @@
 import { ChatItem } from "../chatListProvider";
 import { URL } from "../constants";
-import { address } from "../globals";
+import { address, getUidMapName, storeUidMapName } from "../globals";
 import { Get } from "./http";
 
 interface ChatItemInfo {
@@ -28,6 +28,8 @@ export async function GetChatList(token: string | undefined) {
     try {
         let url = `http://${address}${URL.ChatList}`;
         const data = await Get(url, token) as ChatResp;
+        const idLabelMap = new Map(data.list.map(item => [item.uid, item.name]));
+        storeUidMapName(idLabelMap)
         const chatItems: ChatItem[] = data.list.map(item => {
             return new ChatItem(
                 item.name,
@@ -58,14 +60,14 @@ export async function GetRoomPerson(token: string | undefined, roomId: string) {
     }
 }
 
-export async function GetChatMessage(token: string | undefined, uid: string, type: number) {
+export async function GetChatMessageList(token: string | undefined, uid: string, type: number) {
     try {
         let url = `http://${address}${URL.ChatMessageList}?uid=${uid}&type=${type}`; // 通过 uid 和 type 获取聊天记录
         const data = await Get(url, token) as ChatMessageResp;
         const chatMessages: ChatMessageItem[] = data.list.map(item => {
             return {
                 content: item.content,
-                nickname: "admin",
+                nickname: getUidMapName(item.uid),
                 send_at: item.send_at,
                 type: item.type,
                 uid: item.uid,

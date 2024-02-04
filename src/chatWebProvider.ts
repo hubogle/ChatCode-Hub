@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
 import { ChatItem } from './chatListProvider';
 import { token, uid } from "./globals";
-import { ChatMessageItem, GetChatMessage } from "./server/chat";
+import { ChatMessageItem, GetChatMessageList } from "./server/chat";
 import { WsClient } from './ws';
 
 export class MessageViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private currentMessages: ChatMessageItem[] = [];
     private person: ChatItem;
-
+    private messageListenerAdded: boolean = false; // 是否已经添加了消息监听器
+    private notice: boolean = false; // 是否通知
 
 
     constructor(private readonly extensionUri: vscode.Uri, private readonly wsClient: WsClient) {
@@ -16,11 +17,22 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
         this.person = new ChatItem("", "", false);
     }
 
+    private checkActive() {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor || activeEditor.document.languageId !== 'your-plugin-language-id') {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     private handleReceivedMessage(data: any) {
-        // 解析接收到的消息并更新当前消息列表
         const message = JSON.parse(data);
+        console.log(this.checkActive());
+        if (this.notice) {
+            vscode.window.showInformationMessage(message.nickname + " : " + message.content);
+        }
         this.currentMessages.push(message);
-        // 更新Webview的HTML内容
         this.updateWebviewContent();
     }
 
@@ -39,25 +51,37 @@ export class MessageViewProvider implements vscode.WebviewViewProvider {
         };
 
         webviewView.webview.html = this.getInitialWebviewContent();
+
+        // 监听视图的可见性变化
+        webviewView.onDidChangeVisibility(() => {
+            if (!this._view?.visible) {
+                this.notice = true;
+            } else {
+                this.notice = false;
+            }
+        });
     }
 
     public async showMessagesForPerson(person: ChatItem) {
         if (this._view) {
-            const chatMessageList = await GetChatMessage(token, person.id, person.isGroup ? 2 : 1)
+            const chatMessageList = await GetChatMessageList(token, person.id, person.isGroup ? 2 : 1)
             this.currentMessages = chatMessageList; // 更新当前消息列表
             this.person = person; // 更新当前聊天对象
             this._view.webview.html = this.generateWebviewHtml();
 
-            this._view.webview.onDidReceiveMessage(message => {
-                if (message.command === 'sendMessage') {
-                    this.wsClient.sendMessage(
-                        String(message.content),
-                        message.receiver_id,
-                        uid,
-                        message.isGroup
-                    );
-                }
-            })
+            if (!this.messageListenerAdded) {
+                this._view.webview.onDidReceiveMessage(message => {
+                    if (message.command === 'sendMessage') {
+                        this.wsClient.sendMessage(
+                            String(message.content),
+                            message.receiver_id,
+                            uid,
+                            message.isGroup
+                        );
+                    }
+                });
+                this.messageListenerAdded = true; // 标记监听器已添加
+            }
             this._view.show?.(true); // Bring the webview into view
         }
     }
@@ -111,9 +135,9 @@ function getWebviewContent(messages: string, person: ChatItem): string {
     <style>
         body {
             font-family: var(--vscode-font-family);
-            font-size: var(--vscode-font-size);
+            font-size: var(--vscode-editor-font-size);
             color: var(--vscode-editor-foreground);
-            background-color: var(--vscode-editor-background);
+            background-color: var(--vscode-sideBar-background);
             margin: 0;
             padding: 0;
             display: flex;
@@ -124,12 +148,12 @@ function getWebviewContent(messages: string, person: ChatItem): string {
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* 隐藏滚动条 */
+            overflow: hidden;
         }
         #inputArea {
             margin-top: auto; /* Pushes the input area to the bottom */
-            padding: 10px;
-            background-color: var(--vscode-editor-background); /* Background color */
+            padding: 10px 20px 10px 10px;
+            background-color: var(--vscode-sideBar-background);
         }
         #inputArea input {
             width: 100%;
@@ -138,39 +162,40 @@ function getWebviewContent(messages: string, person: ChatItem): string {
             background-color: var(--vscode-input-background);
             color: var(--vscode-input-foreground);
             border-radius: var(--vscode-input-borderRadius);
+            height: 25px;
         }
         #inputArea input:focus {
-            border-color: var(--vscode-focusBorder); /* Border color when focused */
+            border-color: var(--vscode-focusBorder);
             outline: none;
         }
         #messages {
-            overflow-y: auto; /* 允许在 #messages 上滚动 */
-            flex-grow: 1; /* 允许 #messages 填充剩余空间 */
+            overflow-y: auto;
+            flex-grow: 1;
             padding: 10px;
+            padding: 5px;
         }
-        /* Webkit 浏览器的滚动条定制 */
+
         #messages::-webkit-scrollbar {
-            width: 8px; /* 滚动条宽度 */
+            width: 5px;
         }
 
         #messages::-webkit-scrollbar-thumb {
-            background-color: rgba(0,0,0,0); /* 默认状态下滚动条把手透明 */
+            background-color: rgba(0,0,0,0.2);
             border-radius: 4px;
         }
 
         #messages::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(0,0,0,0.5); /* 滚动时滚动条把手颜色 */
+            background-color: rgba(0,0,0,0.4);
         }
 
         #messages:hover::-webkit-scrollbar-thumb {
-            background-color: rgba(0,0,0,0.5); /* 鼠标悬停在滚动区域时滚动条把手颜色 */
+            background-color: rgba(0,0,0,0.5);
         }
         .sent, .received {
-            margin-bottom: 8px;
-            padding: 10px;
-            border-radius: 10px;
-            color: var(--vscode-editor-foreground);
-            background-color: var(--vscode-editor-background); /* Adapt to theme background */
+            margin-bottom: 4px;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
         }
         .sent {
             /* Additional styles for sent messages if needed */
@@ -181,15 +206,20 @@ function getWebviewContent(messages: string, person: ChatItem): string {
         .message-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+        .nickname, .timestamp {
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
         }
         .nickname {
             font-weight: bold;
-            margin-right: 10px;
         }
         .timestamp {
             color: #888;
-            font-size: 0.8em;
+            font-size: 0.7em;
         }
         .message-content {
             word-wrap: break-word;
@@ -223,7 +253,7 @@ function getWebviewContent(messages: string, person: ChatItem): string {
                     receiver_id: ${person.id},
                     isGroup: ${person.isGroup}
                 });
-                document.getElementById('messageInput').value = ''; // 清空输入框
+                document.getElementById('messageInput').value = '';
                 sendIcon.style.fill = 'var(--vscode-button-foreground)';
             }
         });

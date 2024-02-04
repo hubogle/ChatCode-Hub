@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import WebSocket from 'ws';
-import { address, status, token } from "./globals";
+import { address, getUidMapName, status, token } from "./globals";
 
 export class WsClient {
     private ws: WebSocket | undefined;
@@ -38,15 +38,11 @@ export class WsClient {
                         token: token
                     }
                 };
+                console.log('Send: %s', JSON.stringify(msg));
                 this.ws.send(JSON.stringify(msg));
             }
         });
 
-
-        // this.ws.on('message', (data) => {
-        //     console.log('Received: %s', data);
-        //     // 处理服务器消息
-        // });
 
         this.ws.on('message', async (data) => {
             console.log('Received: %s', data);
@@ -56,7 +52,7 @@ export class WsClient {
                 if (msgRaw.type == 3) {
                     let msg = {
                         content: msgRaw.data.content,
-                        nickname: "admin",
+                        nickname: getUidMapName(msgRaw.data.sender_id),
                         send_at: msgRaw.data.send_at,
                         type: msgRaw.data.session_type,
                         uid: msgRaw.data.sender_id,

@@ -99,4 +99,14 @@ export class Manager extends EventEmitter {
         vscode.commands.executeCommand('chatcode-hub.refresh');
         this.emit("statusChanged");
     }
+
+    public async AddPerson(): Promise<void> {
+        const person = await vscode.window.showInputBox({
+            prompt: "Please enter the person's uid",
+            placeHolder: "uid",
+            validateInput: (text) => {
+                return text === "" ? "Please enter the person's uid" : null;
+            },
+        });
+    }
 }
