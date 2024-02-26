@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { storeGlobals, storeStatus } from './globals';
+import { storeGlobals, storeStatus, storeUidMapName } from './globals';
 import { CreateRoom, UserLogin } from "./server/user";
 
 import * as vscode from "vscode";
@@ -21,6 +21,9 @@ export class Manager extends EventEmitter {
         this.context.globalState.update('token', this.token);
         this.context.globalState.update('address', this.address);
         this.context.globalState.update('uid', this.uid);
+        if (this.uid && this.account) {
+            storeUidMapName(new Map([[this.uid, this.account]]));
+        }
     }
 
 
@@ -32,6 +35,9 @@ export class Manager extends EventEmitter {
         storeGlobals(this.address, this.token, this.account, this.uid);
         if (this.token) {
             storeStatus(true)
+            if (this.uid && this.account) {
+                storeUidMapName(new Map([[this.uid, this.account]]));
+            }
             vscode.commands.executeCommand('chatcode-hub.ws');
         }
     }

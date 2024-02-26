@@ -1,6 +1,6 @@
 import { ChatItem } from "../chatListProvider";
 import { URL } from "../constants";
-import { address, getUidMapName, storeUidMapName } from "../globals";
+import { address, getUidMapName, updateUidMapName } from "../globals";
 import { Get } from "./http";
 
 interface ChatItemInfo {
@@ -29,7 +29,7 @@ export async function GetChatList(token: string | undefined) {
         let url = `http://${address}${URL.ChatList}`;
         const data = await Get(url, token) as ChatResp;
         const idLabelMap = new Map(data.list.map(item => [item.uid, item.name]));
-        storeUidMapName(idLabelMap)
+        updateUidMapName(idLabelMap)
         const chatItems: ChatItem[] = data.list.map(item => {
             return new ChatItem(
                 item.name,

@@ -20,6 +20,12 @@ export function storeUidMapName(newUidMapname: Map<number, string>) {
     uidMapname = newUidMapname;
 }
 
+export function updateUidMapName(uidMapName: Map<number, string>) {
+    for (let [uid, name] of uidMapName) {
+        uidMapname.set(uid, name);
+    }
+}
+
 export function getUidMapName(uid: number): string {
     let name = uidMapname.get(uid);
     if (name) {
